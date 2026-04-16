@@ -34,12 +34,18 @@ export default function LessonPage() {
   const codyEndRef = useRef(null)
 
   useEffect(() => {
+    // Load lesson immediately — don't wait for auth
+    const lessonData = getLessonById(params.id)
+    if (!lessonData) { router.push('/learn'); return }
+    setLesson(lessonData)
+
+    // Auth check in parallel
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.push('/'); return }
       setUser(session.user)
-      const lessonData = getLessonById(params.id)
-      if (!lessonData) { router.push('/learn'); return }
-      setLesson(lessonData)
+    }).catch(() => {
+      // If Supabase fails, still show lesson (save will just be skipped)
+      console.warn('Auth check failed, continuing without user')
     })
   }, [params.id])
 
